@@ -67,4 +67,6 @@ influential <- as.numeric(rownames(df)[(df$`2010` > 4*mean(df$`2010`, na.rm=T))]
 # influential observations
 inf_df <- crime[influential, ] 
 # when we filled NA, 121 precinct was filled with 120's total number of murders
-# let's drop this row since it is an outlier
+# need to decide whether to drop this row since it is an outlier or 
+# make separate analysis on before it was itroduced and after
+# article: https://www.silive.com/opinion/index.ssf/2013/11/a_welcome_newcomer_nypds_new_p.html
