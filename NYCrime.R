@@ -24,3 +24,47 @@ require(zoo)
 crime <- na.locf(na.locf(crime), fromLast = TRUE)
 # now can run summary of dataset
 summary(crime)
+rapply(crime,function(x)length(unique(x)))
+# check crime types and trim whitespaces
+paste(unique(crime$CRIME))
+crime$CRIME <- trim(crime$CRIME)
+# checking column data types
+sapply(crime, class)
+# convert factors to characters
+require(dplyr)
+crime %>% mutate_if(is.factor, as.character) -> crime
+
+### Detect and remove outliers ###
+# handle missing values
+#removing rows that are not for a precinct (all precincts are identified by numbers)
+crime$PCT <- as.numeric(crime$PCT)
+crime <- dplyr::filter(crime, !is.na(PCT))
+# there are 123 precincts with 8 rows for each
+# https://www1.nyc.gov/site/nypd/bureaus/patrol/precincts-landing.page
+full_data_size = 123*8
+# ideally we should have 123*8 = 984 rows
+missing_data_dim = full_data_size - nrow(crime)
+# therefore we have 368 rows of missing data
+
+# copy to test df to detect outliers
+df <- df[!df$CRIME %in% c("TOTAL SEVEN MAJOR FELONY OFFENSES"), ]
+# cooksd <- cooks.distance(lm(df$`2010` ~ ., data=df))
+# plot(cooksd, pch=".", cex=2, main="Influential Obs by Cooks distance")  # plot cook's distance
+# abline(h = 4*mean(cooksd, na.rm=T), col="red")  # add cutoff line
+# text(x=1:length(cooksd)+1, y=cooksd, 
+#      labels=ifelse(cooksd>10*mean(cooksd, na.rm=T),
+#                    names(cooksd),""), col="red", cex=0.5, pos=4, offset=0.2)  # add labels
+# influential <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))])
+# # influential observations
+# inf_df <- crime[influential, ] 
+
+plot(df$`2010`, pch=".", cex=3, main="Crimes in 2010")
+abline(h = 4*mean(df$`2010`, na.rm=T), col="red")  # add cutoff line
+text(x=1:length(df$`2010`)+1, y=df$`2010`, 
+     labels=ifelse(df$`2010`>4*mean(df$`2010`, na.rm=T),
+                   df$`2010`,""), col="red", cex=0.5, pos=4, offset=0.2)  # add labels
+influential <- as.numeric(rownames(df)[(df$`2010` > 4*mean(df$`2010`, na.rm=T))])
+# influential observations
+inf_df <- crime[influential, ] 
+# when we filled NA, 121 precinct was filled with 120's total number of murders
+# let's drop this row since it is an outlier
