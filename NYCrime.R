@@ -70,3 +70,16 @@ inf_df <- crime[influential, ]
 # need to decide whether to drop this row since it is an outlier or 
 # make separate analysis on before it was itroduced and after
 # article: https://www.silive.com/opinion/index.ssf/2013/11/a_welcome_newcomer_nypds_new_p.html
+# TODO:
+# Plot the time series for each of the seven major felonies and for the total (aggregation of all felonies)
+# to see  trends of different crime types during 2000-2017 and do a quantitative analysis of these time series (trends, periodicity etc.). 
+# Look at variance across precincts
+# calculate the mean and standard deviation in time for each precinct and each crime
+# Next extract the total crime row for each precinct and cluster the time series
+# Plot the clusters and discuss the clustering and the trends
+# Next: connecting the temporal and spatial components
+# obtain the NYC precincts geometry and read it in as a shapefile
+# merge the precincts geodataframe with the dataframe of crime that was used to cluster the time series 
+# plot a choropleth of the clusters
+# Next: K-Means clustering of crime type patterns at the NYC Police precincts level during 2000-2017
+# If time allows, merge ACS data and NYC park shapefiles to look at socioeconomic variables and access to green space i.e parks
