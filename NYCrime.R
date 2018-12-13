@@ -143,6 +143,11 @@ ggplot(data=top_variance, aes(x=variable, y=value, group = PCT, colour = PCT)) +
   facet_wrap(~PCT, scales = 'free_y') +
   labs(title="Total crime over time", x='Year', y='Total crime')
 
+
+# export for further analysis in ArcGIS
+write.csv(crime, file = "allCrimes.csv")
+write.csv(precincts, file = "totalCrimesCount.csv")
+       
 # TODO:
 # to see  trends of different crime types during 2000-2017 do a quantitative analysis of these time series (trends, periodicity etc.). 
 # Look at variance across precincts
