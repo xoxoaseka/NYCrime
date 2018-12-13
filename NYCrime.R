@@ -45,8 +45,8 @@ full_data_size = 123*8
 # ideally we should have 123*8 = 984 rows
 missing_data_dim = full_data_size - nrow(crime)
 # therefore we have 368 rows of missing data
-
 # copy to test df to detect outliers
+df <- crime
 df <- df[!df$CRIME %in% c("TOTAL SEVEN MAJOR FELONY OFFENSES"), ]
 # cooksd <- cooks.distance(lm(df$`2010` ~ ., data=df))
 # plot(cooksd, pch=".", cex=2, main="Influential Obs by Cooks distance")  # plot cook's distance
@@ -70,9 +70,81 @@ inf_df <- crime[influential, ]
 # need to decide whether to drop this row since it is an outlier or 
 # make separate analysis on before it was itroduced and after
 # article: https://www.silive.com/opinion/index.ssf/2013/11/a_welcome_newcomer_nypds_new_p.html
+# for the purpose of this study it was decided to exclude 121 precinct from input dataset
+# in the future it would be reasonable to study 2013-2017 years separately (when 121 was introduced and data became available) 
+# make copy of full data
+crime_full <- crime
+# drop 121 precinct
+crime <- crime[!crime$PCT %in% c("121"), ]
+
+# Plot the time series for each of the seven major felonies and for the total 
+# (aggregation of all felonies)
+require(ggplot2)
+require(reshape2)
+
+# create summary
+counted <- crime %>% group_by(CRIME) %>% summarise_all(funs(sum))
+counted <- counted %>% select(-PCT)
+
+# turn into an easily-plottable format
+counted_melt <- melt(counted, id='CRIME')
+
+#plot graph for each felony + one for total felonies 
+ggplot(data=counted_melt, aes(x=variable, y=value, group = CRIME, colour = CRIME)) +
+  geom_line() + facet_wrap(~CRIME, scales = 'free_y', ncol = 1)
+
+# plot all timeseries in one graph
+rownames(counted) <- counted$CRIME
+counted <- counted[,-1]
+require(data.table)
+counted_transpose <- transpose(counted)
+colnames(counted_transpose) <- counted$CRIME
+rownames(counted_transpose) <- colnames(counted)
+counted_transpose <- counted_transpose[-1,]
+crime_ts <- ts(data = counted_transpose, start = 2000, end = 2017, names = colnames(counted_transpose))
+ts.plot(crime_ts, gpars = list(col = rainbow(8)), ylab = "Number of crimes", xlab = "Years", main = "Tire series of NYC crimes during 2000-2017 for all crime types (summed over all precincts)")
+grid()
+# normalize by dividing each crime type by max count
+# normalize <- function(x){
+#   return((x-min(x))/(max(x)-min(x)))
+# }
+# normalized_crime <- as.data.frame(lapply(counted_transpose$BURGLARY, normalize))
+# crime_normalized <- apply(counted_transpose, 2, counted_transpose$BURGLARY/max(counted_transpose$BURGLARY))
+
+for (i in 1:nrow(counted_transpose)){ 
+  counted_transpose[i, 1] <- counted_transpose[which.max(counted_transpose[i,])]
+  } 
+
+# legend("topright", legend = colnames(counted_transpose), col = 1:8, lty = 1)
+# Look at variance across precincts
+precincts <- crime %>% filter(CRIME == 'TOTAL SEVEN MAJOR FELONY OFFENSES') %>% 
+  select(-CRIME) %>% 
+  melt(id='PCT')
+
+precincts_var <- precincts %>% 
+  group_by(PCT) %>% 
+  count(var(value))
+
+precincts_var <- rename(precincts_var, 'variance' = 'var(value)') %>% select(-n)
+
+#plot variance for each PCT
+ggplot(data=precincts_var, mapping=aes(x=PCT , y=variance, group=PCT, colour=PCT)) +
+  geom_col() + xlab(NULL) +
+  labs(title="Variance per precinct", x='Precinct', y='Variance')
+
+#plot crime over time for PCT with largest (14 and 18) and lowest (22 and 94) variance 
+top_variance <- precincts %>% filter(PCT == 14 |
+                                       PCT == 18|
+                                       PCT == 22|
+                                       PCT == 94)
+
+ggplot(data=top_variance, aes(x=variable, y=value, group = PCT, colour = PCT)) +
+  geom_line() + 
+  facet_wrap(~PCT, scales = 'free_y') +
+  labs(title="Total crime over time", x='Year', y='Total crime')
+
 # TODO:
-# Plot the time series for each of the seven major felonies and for the total (aggregation of all felonies)
-# to see  trends of different crime types during 2000-2017 and do a quantitative analysis of these time series (trends, periodicity etc.). 
+# to see  trends of different crime types during 2000-2017 do a quantitative analysis of these time series (trends, periodicity etc.). 
 # Look at variance across precincts
 # calculate the mean and standard deviation in time for each precinct and each crime
 # Next extract the total crime row for each precinct and cluster the time series
